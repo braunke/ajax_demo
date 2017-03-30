@@ -1,5 +1,7 @@
 var express = require('express');
 var router = express.Router();
+var ObjectID = require('mongodb').ObjectID;
+
 
 
 // "Database". Names of places, and whether the user has visited it or not.
@@ -11,6 +13,17 @@ var router = express.Router();
 //];
 //var counter = places.length;
 
+function translateId(obj) {
+    obj.id = obj._id;
+    delete obj._id;
+    return obj;
+}
+
+function untranslateId(obj) {
+    obj._id = ObjectID(obj.id);
+    delete obj.id;
+    return obj;
+}
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -19,14 +32,21 @@ router.get('/', function(req, res, next) {
         if (err) {
             return next(err)
         }
-        return res.render('index', {title: 'Travel Wish List', places: places});
+        return res.render('index', {layout: 'layout', title: 'Travel Wish List'});
     });
 });
 
 
 /* GET all items home page. */
 router.get('/all', function(req, res) {
-  res.json(places);
+
+    req.db.collection('places').find().toArray(function (err, places)
+    {
+        if (err) {
+            return next(err)
+        }
+        res.json(places.map(translateId));
+    });
 });
 
 
@@ -36,27 +56,10 @@ router.post('/add', function(req, res, next) {
         if (err) {
             return next(err);
         }
-        var name = req.body.name;
-        var counter = places.length;
-        var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
-
-        return places.push(place);
+        res.status(201);      // Created
+        res.json(translateId(req.body));      // Send new object data back as JSON, if needed.
 
     });
-
-  //var name = req.body.name;
-  //var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
-
- // places.push(place);
-
-  console.log('After POST, the places list is');
-  console.log(places);
-
-  res.status(201);      // Created
-  res.json(place);      // Send new object data back as JSON, if needed.
-
-  // TODO may want to check if place already in list and don't add.
-
 });
 
 
@@ -82,25 +85,16 @@ router.put('/update', function(req, res){
 });
 
 
-router.delete('/delete', function(req, res){
+router.post('/delete', function(req, res, next){
 
-  var place_id = req.body.id;
-  console.log(place_id);
+    req.db.collection('places').remove(untranslateId(req.body), function(err){
+        if (err) {
+            return next(err);
+        }
+        res.status(200);
+        res.json(req.body);
 
-  for (var i = 0 ; i < places.length ; i++) {
-    var place = places[i];
-    if (place.id == place_id) {
-      places.splice(i, 1);  //Delete the element at this position
-      res.json(place);
-      break;
-    }
-  }
-
-  console.log('After DELETE, the places list is');
-  console.log(places);
-
-  res.status(200);
-  res.end();
+    });
 
 });
 
