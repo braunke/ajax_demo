@@ -14,7 +14,13 @@ var counter = places.length;
 
 /* GET home page. */
 router.get('/', function(req, res) {
-  res.render('index', { title: 'Travel Wish List', places : places });
+  req.db.collection('cities').find().toArray(function (err, places)
+    {
+        if (err) {
+            return next(err)
+        }
+        return res.render('index', {title: 'Travel Wish List', places: places});
+    });
 });
 
 

@@ -4,10 +4,21 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+//requires to use mongo db
+var MongoClient = require('mongodb').MongoClient;
 var index = require('./routes/index');
 
 var app = express();
+//connects to mongo database
+var mongo_pw = process.env.MONGO_PW;
+var mongo_user = process.env.MONGO_USER;
+var schoolUrl = 'mongodb://localhost:27017/cities';
+var homeUrl = 'mongodb://' + mongo_user + ':' + mongo_pw + '@localhost:27017/cities';
+var url = homeUrl;
+MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    console.log('connected to MongoDB');
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
