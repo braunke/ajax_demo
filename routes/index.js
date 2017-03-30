@@ -4,17 +4,17 @@ var router = express.Router();
 
 // "Database". Names of places, and whether the user has visited it or not.
 
-var places = [
-{id: "1", name: "Rome", visited: true},
-{id: "2", name: "New York", visited: false},
-{id: "3", name: "Tokyo", visited: false}
-];
-var counter = places.length;
+//var places = [
+//{id: "1", name: "Rome", visited: true},
+//{id: "2", name: "New York", visited: false},
+//{id: "3", name: "Tokyo", visited: false}
+//];
+//var counter = places.length;
 
 
 /* GET home page. */
-router.get('/', function(req, res) {
-  req.db.collection('cities').find().toArray(function (err, places)
+router.get('/', function(req, res, next) {
+  req.db.collection('places').find().toArray(function (err, places)
     {
         if (err) {
             return next(err)
@@ -31,12 +31,23 @@ router.get('/all', function(req, res) {
 
 
 /* POST - add a new location */
-router.post('/add', function(req, res) {
+router.post('/add', function(req, res, next) {
+    req.db.collection('places').insertOne(req.body, function(err){
+        if (err) {
+            return next(err);
+        }
+        var name = req.body.name;
+        var counter = places.length;
+        var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
 
-  var name = req.body.name;
-  var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
+        return places.push(place);
 
-  places.push(place);
+    });
+
+  //var name = req.body.name;
+  //var place = { 'id': ++counter + "" , 'name': name, 'visited': false };
+
+ // places.push(place);
 
   console.log('After POST, the places list is');
   console.log(places);
