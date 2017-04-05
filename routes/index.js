@@ -12,7 +12,7 @@ var ObjectID = require('mongodb').ObjectID;
 //{id: "3", name: "Tokyo", visited: false}
 //];
 //var counter = places.length;
-
+//when entered location has a _id but front end expecting id so these two functions convert the ids
 function translateId(obj) {
     obj.id = obj._id;
     delete obj._id;
@@ -38,6 +38,7 @@ router.get('/', function(req, res, next) {
 
 
 /* GET all items home page. */
+//display travel locations
 router.get('/all', function(req, res) {
 
     req.db.collection('places').find().toArray(function (err, places)
@@ -51,6 +52,7 @@ router.get('/all', function(req, res) {
 
 
 /* POST - add a new location */
+//also adds to database
 router.post('/add', function(req, res, next) {
     req.db.collection('places').insertOne(req.body, function(err){
         if (err) {
@@ -64,36 +66,27 @@ router.post('/add', function(req, res, next) {
 
 
 /* PUT - update whether a place has been visited or not */
-router.put('/update', function(req, res){
-
-  var id = req.body.id;
-  var visited = req.body.visited == "true";  // all the body parameters are strings
-
-  for (var i = 0 ; i < places.length ; i++) {
-    var place = places[i];
-    if (place.id == id) {
-      place.visited = visited;
-      places[i] = place;
-    }
-  }
-
-  console.log('After PUT, the places list is');
-  console.log(places);
-
-  res.json(place);
-
+router.put('/update', function(req, res, next){
+    var update = { $set : { visited : req.body.visited == "true" }};  // all the body parameters are strings
+    req.db.collection('places').findOneAndUpdate(untranslateId(req.body), update, function(err, place)
+    {
+        if (err) {
+            return next(err);
+        }
+        res.json(translateId(place));
+    });
 });
 
-
-router.post('/delete', function(req, res, next){
+//delete button working
+//removes from database
+router.delete('/delete', function(req, res, next){
 
     req.db.collection('places').remove(untranslateId(req.body), function(err){
         if (err) {
             return next(err);
         }
         res.status(200);
-        res.json(req.body);
-
+        res.json(translateId(req.body));
     });
 
 });
